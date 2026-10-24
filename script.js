@@ -32,6 +32,27 @@ function saveEntries(entries) {
 
 // LOGIN / REGISTER MODE
 
+const USERS_KEY = "medicare_tracker_users";
+
+function readUsers() {
+  try {
+    const users = JSON.parse(localStorage.getItem(USERS_KEY) || "{}");
+
+    return users && typeof users === "object" && !Array.isArray(users)
+      ? users
+      : {};
+  } catch (error) {
+    console.error("Unable to read users:", error);
+    return {};
+  }
+}
+
+function normalizeEmail(email) {
+  return email.trim().toLowerCase();
+}
+
+// LOGIN / REGISTER MODE
+
 function setMode(nextMode) {
   mode = nextMode;
 
@@ -67,9 +88,14 @@ $("switchMode").addEventListener("click", () => {
 $("authForm").addEventListener("submit", (event) => {
   event.preventDefault();
 
-  const email = $("email").value.trim().toLowerCase();
+  const email = normalizeEmail($("email").value);
   const password = $("password").value;
   const users = readUsers();
+
+  if (!email || !password) {
+    $("authError").textContent = "Please enter email and password.";
+    return;
+  }
 
   if (mode === "register") {
     const name = $("fullName").value.trim();
@@ -89,17 +115,100 @@ $("authForm").addEventListener("submit", (event) => {
       password,
     };
 
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-    login(email, users[email]);
-  } else {
-    if (!users[email] || users[email].password !== password) {
-      $("authError").textContent = "Incorrect email or password.";
+    try {
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    } catch (error) {
+      $("authError").textContent = "Unable to save account in this browser.";
       return;
     }
 
     login(email, users[email]);
+    return;
   }
+
+  const user = users[email];
+
+  if (
+    !user ||
+    typeof user.password !== "string" ||
+    user.password !== password
+  ) {
+    $("authError").textContent =
+      "Incorrect email or password. Check your email and password, or create an account on this browser.";
+    return;
+  }
+
+  login(email, user);
 });
+
+// function setMode(nextMode) {
+//   mode = nextMode;
+
+//   $("authTitle").textContent =
+//     mode === "login" ? "Welcome back" : "Create your account";
+
+//   $("authSub").textContent =
+//     mode === "login"
+//       ? "Sign in to manage your 45-day sales progress."
+//       : "Create an account to track your daily sales.";
+
+//   $("nameField").hidden = mode !== "register";
+//   $("fullName").required = mode === "register";
+
+//   $("authSubmit").textContent = mode === "login" ? "Sign in" : "Create account";
+
+//   $("switchText").textContent =
+//     mode === "login" ? "New here?" : "Already have an account?";
+
+//   $("switchMode").textContent =
+//     mode === "login" ? "Create an account" : "Sign in";
+
+//   $("password").autocomplete =
+//     mode === "login" ? "current-password" : "new-password";
+
+//   $("authError").textContent = "";
+// }
+
+// $("switchMode").addEventListener("click", () => {
+//   setMode(mode === "login" ? "register" : "login");
+// });
+
+// $("authForm").addEventListener("submit", (event) => {
+//   event.preventDefault();
+
+//   const email = $("email").value.trim().toLowerCase();
+//   const password = $("password").value;
+//   const users = readUsers();
+
+//   if (mode === "register") {
+//     const name = $("fullName").value.trim();
+
+//     if (name.length < 2) {
+//       $("authError").textContent = "Please enter your name.";
+//       return;
+//     }
+
+//     if (users[email]) {
+//       $("authError").textContent = "Account already exists. Please sign in.";
+//       return;
+//     }
+
+//     users[email] = {
+//       name,
+//       password,
+//     };
+
+//     localStorage.setItem(USERS_KEY, JSON.stringify(users));
+//     login(email, users[email]);
+//   } else {
+//     if (!users[email] || users[email].password !== password) {
+//       $("authError").textContent = "Incorrect email or password.";
+//       return;
+//     }
+
+//     login(email, users[email]);
+//   }
+// });
 
 // OPEN DASHBOARD
 
