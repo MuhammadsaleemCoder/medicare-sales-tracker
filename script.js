@@ -1,60 +1,78 @@
+"use strict";
+
 const $ = (id) => document.getElementById(id);
 
 let mode = "login";
 let currentUser = null;
 let editingDay = null;
+let toastTimer = null;
 
 const USERS_KEY = "medicare_tracker_users";
+const SESSION_KEY = "medicare_tracker_session";
 
-function readUsers() {
-  try {
-    return JSON.parse(localStorage.getItem(USERS_KEY) || "{}");
-  } catch {
-    return {};
-  }
-}
-
-function dataKey(email) {
-  return "medicare_tracker_data_" + email.toLowerCase();
-}
-
-function getEntries() {
-  try {
-    return JSON.parse(localStorage.getItem(dataKey(currentUser)) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function saveEntries(entries) {
-  localStorage.setItem(dataKey(currentUser), JSON.stringify(entries));
-}
-
-// LOGIN / REGISTER MODE
-
-const USERS_KEY = "medicare_tracker_users";
+// STORAGE HELPERS
 
 function readUsers() {
   try {
     const users = JSON.parse(localStorage.getItem(USERS_KEY) || "{}");
 
-    return users && typeof users === "object" && !Array.isArray(users)
-      ? users
-      : {};
+    if (!users || typeof users !== "object" || Array.isArray(users)) {
+      return {};
+    }
+
+    return users;
   } catch (error) {
-    console.error("Unable to read users:", error);
+    console.error("Error reading users:", error);
     return {};
   }
 }
 
 function normalizeEmail(email) {
-  return email.trim().toLowerCase();
+  return String(email || "")
+    .trim()
+    .toLowerCase();
+}
+
+function dataKey(email) {
+  return "medicare_tracker_data_" + normalizeEmail(email);
+}
+
+function getEntries() {
+  if (!currentUser) return [];
+
+  try {
+    const entries = JSON.parse(
+      localStorage.getItem(dataKey(currentUser)) || "[]",
+    );
+
+    return Array.isArray(entries) ? entries : [];
+  } catch (error) {
+    console.error("Error reading sales data:", error);
+    return [];
+  }
+}
+
+function saveEntries(entries) {
+  if (!currentUser) {
+    showToast("Please sign in first.");
+    return false;
+  }
+
+  try {
+    localStorage.setItem(dataKey(currentUser), JSON.stringify(entries));
+
+    return true;
+  } catch (error) {
+    console.error("Error saving sales data:", error);
+    showToast("Unable to save data in this browser.");
+    return false;
+  }
 }
 
 // LOGIN / REGISTER MODE
 
 function setMode(nextMode) {
-  mode = nextMode;
+  mode = nextMode === "register" ? "register" : "login";
 
   $("authTitle").textContent =
     mode === "login" ? "Welcome back" : "Create your account";
@@ -85,6 +103,8 @@ $("switchMode").addEventListener("click", () => {
   setMode(mode === "login" ? "register" : "login");
 });
 
+// REGISTER AND LOGIN
+
 $("authForm").addEventListener("submit", (event) => {
   event.preventDefault();
 
@@ -93,7 +113,7 @@ $("authForm").addEventListener("submit", (event) => {
   const users = readUsers();
 
   if (!email || !password) {
-    $("authError").textContent = "Please enter email and password.";
+    $("authError").textContent = "Please enter your email and password.";
     return;
   }
 
@@ -105,20 +125,29 @@ $("authForm").addEventListener("submit", (event) => {
       return;
     }
 
+    if (password.length < 6) {
+      $("authError").textContent =
+        "Password must contain at least 6 characters.";
+      return;
+    }
+
     if (users[email]) {
       $("authError").textContent = "Account already exists. Please sign in.";
       return;
     }
 
     users[email] = {
-      name,
-      password,
+      name: name,
+      password: password,
     };
 
     try {
       localStorage.setItem(USERS_KEY, JSON.stringify(users));
     } catch (error) {
-      $("authError").textContent = "Unable to save account in this browser.";
+      console.error("Registration error:", error);
+
+      $("authError").textContent =
+        "Unable to save your account in this browser.";
       return;
     }
 
@@ -134,105 +163,49 @@ $("authForm").addEventListener("submit", (event) => {
     user.password !== password
   ) {
     $("authError").textContent =
-      "Incorrect email or password. Check your email and password, or create an account on this browser.";
+      "Incorrect email or password. Check your details or register on this browser.";
     return;
   }
 
   login(email, user);
 });
 
-// function setMode(nextMode) {
-//   mode = nextMode;
-
-//   $("authTitle").textContent =
-//     mode === "login" ? "Welcome back" : "Create your account";
-
-//   $("authSub").textContent =
-//     mode === "login"
-//       ? "Sign in to manage your 45-day sales progress."
-//       : "Create an account to track your daily sales.";
-
-//   $("nameField").hidden = mode !== "register";
-//   $("fullName").required = mode === "register";
-
-//   $("authSubmit").textContent = mode === "login" ? "Sign in" : "Create account";
-
-//   $("switchText").textContent =
-//     mode === "login" ? "New here?" : "Already have an account?";
-
-//   $("switchMode").textContent =
-//     mode === "login" ? "Create an account" : "Sign in";
-
-//   $("password").autocomplete =
-//     mode === "login" ? "current-password" : "new-password";
-
-//   $("authError").textContent = "";
-// }
-
-// $("switchMode").addEventListener("click", () => {
-//   setMode(mode === "login" ? "register" : "login");
-// });
-
-// $("authForm").addEventListener("submit", (event) => {
-//   event.preventDefault();
-
-//   const email = $("email").value.trim().toLowerCase();
-//   const password = $("password").value;
-//   const users = readUsers();
-
-//   if (mode === "register") {
-//     const name = $("fullName").value.trim();
-
-//     if (name.length < 2) {
-//       $("authError").textContent = "Please enter your name.";
-//       return;
-//     }
-
-//     if (users[email]) {
-//       $("authError").textContent = "Account already exists. Please sign in.";
-//       return;
-//     }
-
-//     users[email] = {
-//       name,
-//       password,
-//     };
-
-//     localStorage.setItem(USERS_KEY, JSON.stringify(users));
-//     login(email, users[email]);
-//   } else {
-//     if (!users[email] || users[email].password !== password) {
-//       $("authError").textContent = "Incorrect email or password.";
-//       return;
-//     }
-
-//     login(email, users[email]);
-//   }
-// });
-
 // OPEN DASHBOARD
 
 function login(email, user) {
-  currentUser = email;
+  currentUser = normalizeEmail(email);
 
-  sessionStorage.setItem("medicare_tracker_session", email);
+  try {
+    sessionStorage.setItem(SESSION_KEY, currentUser);
+  } catch (error) {
+    console.error("Session storage error:", error);
+  }
 
   $("auth").hidden = true;
   $("app").hidden = false;
-  $("userName").textContent = user.name || email;
+  $("userName").textContent = user.name || currentUser;
 
   initializeTracker();
+  cancelEdit();
   render();
 }
 
+// LOGOUT
+
 function logout() {
   currentUser = null;
-  sessionStorage.removeItem("medicare_tracker_session");
+
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+  } catch (error) {
+    console.error("Logout session error:", error);
+  }
 
   $("app").hidden = true;
   $("auth").hidden = false;
 
   $("authForm").reset();
+
   cancelEdit();
   setMode("login");
 }
@@ -247,8 +220,10 @@ function initializeTracker() {
 
   for (let i = 1; i <= 45; i++) {
     const option = document.createElement("option");
+
     option.value = String(i);
     option.textContent = `Day ${i}`;
+
     select.appendChild(option);
   }
 
@@ -257,6 +232,7 @@ function initializeTracker() {
 
 function localDateString() {
   const date = new Date();
+
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
@@ -277,11 +253,7 @@ $("saleStatus").addEventListener("change", () => {
 $("saleCount").addEventListener("input", () => {
   const count = Number($("saleCount").value);
 
-  if (count > 0) {
-    $("saleStatus").value = "yes";
-  } else {
-    $("saleStatus").value = "no";
-  }
+  $("saleStatus").value = count > 0 ? "yes" : "no";
 });
 
 // SAVE OR UPDATE DAILY ENTRY
@@ -289,7 +261,10 @@ $("saleCount").addEventListener("input", () => {
 $("saleForm").addEventListener("submit", (event) => {
   event.preventDefault();
 
-  if (!currentUser) return;
+  if (!currentUser) {
+    showToast("Please sign in first.");
+    return;
+  }
 
   const day = Number($("dayNumber").value);
   const date = $("saleDate").value;
@@ -301,7 +276,7 @@ $("saleForm").addEventListener("submit", (event) => {
     return;
   }
 
-  if (day < 1 || day > 45) {
+  if (!Number.isInteger(day) || day < 1 || day > 45) {
     showToast("Select a day between 1 and 45.");
     return;
   }
@@ -324,26 +299,31 @@ $("saleForm").addEventListener("submit", (event) => {
   const entries = getEntries();
 
   const entry = {
-    day,
-    date,
+    day: day,
+    date: date,
     line: $("line").value,
-    status,
+    status: status,
     sales: status === "yes" ? count : 0,
     notes: $("notes").value.trim(),
     updatedAt: new Date().toISOString(),
   };
 
-  const existingIndex = entries.findIndex((item) => item.day === day);
+  const existingIndex = entries.findIndex((item) => Number(item.day) === day);
 
   if (existingIndex !== -1) {
     entries[existingIndex] = entry;
-    showToast(`Day ${day} updated successfully.`);
   } else {
     entries.push(entry);
-    showToast(`Day ${day} saved successfully.`);
   }
 
-  saveEntries(entries);
+  if (!saveEntries(entries)) return;
+
+  showToast(
+    existingIndex !== -1
+      ? `Day ${day} updated successfully.`
+      : `Day ${day} saved successfully.`,
+  );
+
   cancelEdit();
   render();
 });
@@ -372,17 +352,17 @@ $("cancelEdit").addEventListener("click", cancelEdit);
 // EDIT ENTRY
 
 function editEntry(day) {
-  const entry = getEntries().find((item) => item.day === day);
+  const entry = getEntries().find((item) => Number(item.day) === Number(day));
 
   if (!entry) return;
 
-  editingDay = day;
+  editingDay = Number(day);
 
-  $("saleDate").value = entry.date;
+  $("saleDate").value = entry.date || localDateString();
   $("dayNumber").value = String(entry.day);
-  $("line").value = entry.line;
-  $("saleStatus").value = entry.status;
-  $("saleCount").value = entry.sales;
+  $("line").value = entry.line || "";
+  $("saleStatus").value = entry.status || "no";
+  $("saleCount").value = Number(entry.sales) || 0;
   $("notes").value = entry.notes || "";
 
   $("formTitle").textContent = `Edit Day ${day}`;
@@ -402,11 +382,13 @@ function deleteEntry(day) {
 
   if (!confirmed) return;
 
-  const entries = getEntries().filter((item) => item.day !== day);
+  const entries = getEntries().filter(
+    (item) => Number(item.day) !== Number(day),
+  );
 
-  saveEntries(entries);
+  if (!saveEntries(entries)) return;
 
-  if (editingDay === day) {
+  if (editingDay === Number(day)) {
     cancelEdit();
   }
 
@@ -437,6 +419,8 @@ function formatDate(value) {
 
   const date = new Date(value + "T12:00:00");
 
+  if (Number.isNaN(date.getTime())) return "—";
+
   return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -446,10 +430,10 @@ function formatDate(value) {
 
 // TOAST MESSAGE
 
-let toastTimer;
-
 function showToast(message) {
   const toast = $("toast");
+
+  if (!toast) return;
 
   toast.textContent = message;
   toast.style.display = "block";
@@ -466,11 +450,14 @@ function showToast(message) {
 function render() {
   if (!currentUser) return;
 
-  const entries = getEntries().sort((a, b) => a.day - b.day);
+  const entries = getEntries().sort((a, b) => Number(a.day) - Number(b.day));
 
-  const totalSales = entries.reduce((sum, entry) => sum + entry.sales, 0);
+  const totalSales = entries.reduce(
+    (sum, entry) => sum + (Number(entry.sales) || 0),
+    0,
+  );
 
-  const salesDays = entries.filter((entry) => entry.sales > 0).length;
+  const salesDays = entries.filter((entry) => Number(entry.sales) > 0).length;
 
   const daysLogged = entries.length;
 
@@ -486,13 +473,13 @@ function render() {
 
   $("progressFill").style.width = `${(daysLogged / 45) * 100}%`;
 
-  $("remainingDays").textContent = 45 - daysLogged;
+  $("remainingDays").textContent = Math.max(0, 45 - daysLogged);
 
   const filter = $("filterLine").value;
 
   const shownEntries = entries
     .filter((entry) => filter === "all" || entry.line === filter)
-    .sort((a, b) => b.day - a.day);
+    .sort((a, b) => Number(b.day) - Number(a.day));
 
   const tbody = $("entriesBody");
   tbody.innerHTML = "";
@@ -506,27 +493,29 @@ function render() {
 
     tr.innerHTML = `
       <td>
-        <span class="day-chip">D${entry.day}</span>
+        <span class="day-chip">D${Number(entry.day)}</span>
         <div class="date-text">${formatDate(entry.date)}</div>
       </td>
       <td>
-        <strong>${escapeHtml(entry.line)}</strong>
+        <strong>${escapeHtml(entry.line || "")}</strong>
         ${note}
       </td>
-      <td><strong>${entry.sales}</strong></td>
+      <td><strong>${Number(entry.sales) || 0}</strong></td>
       <td>
-        <span class="sale-pill ${entry.sales > 0 ? "sale-yes" : "sale-no"}">
-          ${entry.sales > 0 ? "SALE" : "NO SALE"}
+        <span class="sale-pill ${
+          Number(entry.sales) > 0 ? "sale-yes" : "sale-no"
+        }">
+          ${Number(entry.sales) > 0 ? "SALE" : "NO SALE"}
         </span>
       </td>
       <td>
         <button class="action-btn"
-          data-edit="${entry.day}"
-          aria-label="Edit Day ${entry.day}"
+          data-edit="${Number(entry.day)}"
+          aria-label="Edit Day ${Number(entry.day)}"
           title="Edit">✎</button>
         <button class="action-btn delete"
-          data-delete="${entry.day}"
-          aria-label="Delete Day ${entry.day}"
+          data-delete="${Number(entry.day)}"
+          aria-label="Delete Day ${Number(entry.day)}"
           title="Delete">×</button>
       </td>
     `;
@@ -553,12 +542,25 @@ $("filterLine").addEventListener("change", render);
 
 // RESTORE SESSION
 
-const savedSession = sessionStorage.getItem("medicare_tracker_session");
+function restoreSession() {
+  let savedSession = null;
 
-const users = readUsers();
+  try {
+    savedSession = sessionStorage.getItem(SESSION_KEY);
+  } catch (error) {
+    console.error("Unable to restore session:", error);
+  }
 
-if (savedSession && users[savedSession]) {
-  login(savedSession, users[savedSession]);
-} else {
-  setMode("login");
+  const users = readUsers();
+
+  if (savedSession && users[savedSession]) {
+    login(savedSession, users[savedSession]);
+  } else {
+    currentUser = null;
+    $("app").hidden = true;
+    $("auth").hidden = false;
+    setMode("login");
+  }
 }
+
+restoreSession();
