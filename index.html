@@ -3,42 +3,66 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Medicare Sales Tracker</title>
+    <meta name="theme-color" content="#071735" />
+
+    <meta
+      name="description"
+      content="Track daily Medicare sales, weekly AEP targets and bonuses."
+    />
+
+    <title>Medicare Sales & Bonus Tracker</title>
+
     <link rel="stylesheet" href="style.css" />
   </head>
+
   <body>
-    <!-- Login / Register -->
+    <!-- ================= AUTHENTICATION ================= -->
+
     <section class="auth-wrap" id="auth">
       <div class="auth-card">
-        <div class="brand-mark">S</div>
+        <div class="brand-mark">M</div>
+
+        <p class="eyebrow">AEP 2026 PERFORMANCE</p>
+
         <h1 id="authTitle">Welcome back</h1>
+
         <p class="sub" id="authSub">
-          Sign in to manage your 45-day sales progress.
+          Sign in to manage your sales activity and bonuses.
         </p>
 
         <form id="authForm">
           <div class="field" id="nameField" hidden>
             <label for="fullName">Your name</label>
-            <input id="fullName" placeholder="Your name" />
+
+            <input
+              type="text"
+              id="fullName"
+              placeholder="Your name"
+              autocomplete="name"
+            />
           </div>
 
           <div class="field">
             <label for="email">Email address</label>
+
             <input
-              id="email"
               type="email"
+              id="email"
               placeholder="you@example.com"
+              autocomplete="username"
               required
             />
           </div>
 
           <div class="field">
             <label for="password">Password</label>
+
             <input
-              id="password"
               type="password"
+              id="password"
               minlength="6"
               placeholder="At least 6 characters"
+              autocomplete="current-password"
               required
             />
           </div>
@@ -46,123 +70,295 @@
           <button class="primary full" id="authSubmit" type="submit">
             Sign in
           </button>
-          <p class="error" id="authError"></p>
+
+          <p class="error" id="authError" role="alert"></p>
         </form>
 
         <p class="switch">
           <span id="switchText">New here?</span>
+
           <button class="text-btn" id="switchMode" type="button">
             Create an account
           </button>
         </p>
+
+        <p class="auth-note">
+          Browser demo: this version saves data in this browser only.
+        </p>
       </div>
     </section>
 
-    <!-- Main Dashboard -->
+    <!-- ================= MAIN APPLICATION ================= -->
+
     <div id="app" hidden>
+      <!-- HEADER -->
+
       <header class="topbar">
         <div class="brand">
-          <div class="brand-mark">S</div>
+          <div class="brand-mark small">M</div>
+
           <div>
             <h2>Medicare Sales Tracker</h2>
-            <p>Daily performance dashboard</p>
+            <p>Daily performance · AEP 2026</p>
           </div>
         </div>
+
         <div class="user-area">
           <span id="userName"></span>
-          <button class="logout" id="logout">Log out</button>
+
+          <button class="logout" id="logout" type="button">Log out</button>
         </div>
       </header>
 
       <main class="container">
-        <div class="welcome">
-          <div>
-            <h1>Daily sales overview</h1>
-            <p>Track your progress over 45 days.</p>
-          </div>
-          <span class="period">45-DAY TRACKER</span>
-        </div>
+        <!-- WELCOME -->
 
-        <!-- Statistics -->
-        <section class="stats">
-          <div class="stat">
+        <section class="welcome">
+          <div>
+            <p class="eyebrow">YOUR PERFORMANCE</p>
+
+            <h1>Sales overview</h1>
+
+            <p>
+              Record activity by date. Weekdays and weekly targets are
+              calculated automatically.
+            </p>
+          </div>
+
+          <span class="period">DAILY ACTIVITY</span>
+        </section>
+
+        <!-- ================= STATISTICS ================= -->
+
+        <section class="stats-grid">
+          <article class="stat-card">
             <span>Total sales</span>
             <strong id="totalSales">0</strong>
             <small>All recorded sales</small>
-          </div>
-          <div class="stat">
-            <span>Days logged</span>
-            <strong id="daysLogged">0 / 45</strong>
-            <small>Days with an entry</small>
-          </div>
-          <div class="stat">
+          </article>
+
+          <article class="stat-card">
             <span>Sales days</span>
             <strong id="salesDays">0</strong>
-            <small>Days with sales</small>
-          </div>
-          <div class="stat">
+            <small>Dates with at least one sale</small>
+          </article>
+
+          <article class="stat-card">
+            <span>Days off</span>
+            <strong id="daysOff">0</strong>
+            <small>Marked as day off</small>
+          </article>
+
+          <article class="stat-card">
             <span>Daily average</span>
             <strong id="dailyAvg">0</strong>
-            <small>Sales per logged day</small>
-          </div>
+            <small>Sales per sales day</small>
+          </article>
         </section>
 
-        <div class="content-grid">
-          <!-- Entry Form -->
+        <!-- ================= BONUS CENTER ================= -->
+
+        <section class="section-heading">
+          <div>
+            <p class="eyebrow">INCENTIVE CENTER</p>
+            <h2>Bonus & earnings</h2>
+          </div>
+
+          <span class="live-label">
+            <i></i>
+            Auto calculated
+          </span>
+        </section>
+
+        <section class="bonus-grid">
+          <!-- DAILY BONUS -->
+
+          <article class="bonus-card">
+            <div class="card-icon">☀</div>
+
+            <span>Daily bonus earned</span>
+
+            <strong id="dailyBonus">Rs. 0</strong>
+
+            <small> 2+ sales in one date · Rs. 1,000 per sale </small>
+          </article>
+
+          <!-- WEEKLY BONUS -->
+
+          <article class="bonus-card">
+            <div class="card-icon">▦</div>
+
+            <span>Weekly AEP bonus</span>
+
+            <strong id="weeklyBonus">Rs. 0</strong>
+
+            <small> Calendar week · Monday to Sunday </small>
+          </article>
+
+          <!-- TOTAL BONUS -->
+
+          <article class="bonus-card total-bonus">
+            <div class="card-icon">★</div>
+
+            <span>Total bonus earned</span>
+
+            <strong id="totalBonus">Rs. 0</strong>
+
+            <small> Daily bonus + weekly AEP bonus </small>
+          </article>
+
+          <!-- CURRENT WEEK -->
+
+          <article class="bonus-card">
+            <div class="card-icon">◎</div>
+
+            <span>This week</span>
+
+            <strong id="currentWeekSales">0 sales</strong>
+
+            <small id="currentWeekTarget">
+              10 sales to hit the first target
+            </small>
+
+            <small id="currentWeekDates"> Monday – Sunday </small>
+          </article>
+        </section>
+
+        <!-- ================= MAIN CONTENT ================= -->
+
+        <section class="content-grid">
+          <!-- ================= ADD ACTIVITY FORM ================= -->
+
           <section class="panel">
-            <h2 id="formTitle">Add daily entry</h2>
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">RECORD PERFORMANCE</p>
+
+                <h2 id="formTitle">Add daily activity</h2>
+              </div>
+
+              <span class="panel-symbol">＋</span>
+            </div>
+
             <p class="panel-desc">
-              Select date, tracker day, line and sale result.
+              Choose a date. The weekday is detected automatically. Mark a day
+              off when you did not work.
             </p>
 
             <form id="saleForm">
+              <!-- DATE -->
+
               <div class="field">
-                <label for="saleDate">Date</label>
+                <label for="saleDate"> Activity date </label>
+
                 <input type="date" id="saleDate" required />
+
+                <small class="field-hint" id="weekdayPreview">
+                  Select a date to see the weekday.
+                </small>
               </div>
 
-              <div class="field">
-                <label for="dayNumber">Tracker day</label>
-                <select id="dayNumber" required></select>
-              </div>
+              <!-- ACTIVITY TYPE -->
 
               <div class="field">
-                <label for="line">Campaign / Line</label>
-                <select id="line" required>
-                  <option value="D1">D1</option>
-                  <option value="D2">D2</option>
-                  <option value="D3">D3</option>
-                  <option value="D4">D4</option>
-                  <option value="D5">D5</option>
-                  <option value="HI">HI</option>
-                  <option value="HI2">HI2</option>
-                  <option value="HI3">HI3</option>
-                  <option value="Others">Others</option>
+                <label for="activityType"> Your activity </label>
+
+                <select id="activityType" required>
+                  <option value="working">Working day</option>
+
+                  <option value="off">Day off</option>
                 </select>
+
+                <small class="field-hint">
+                  Day off entries are excluded from sales-day count.
+                </small>
               </div>
 
-              <div class="field">
-                <label for="saleStatus">Sale made?</label>
-                <select id="saleStatus" required>
-                  <option value="yes">Yes — Sale made</option>
-                  <option value="no">No sale</option>
-                </select>
-              </div>
+              <!-- CAMPAIGN LINES -->
 
-              <div class="field">
-                <label for="saleCount">Number of sales</label>
+              <fieldset class="line-picker" id="lineField">
+                <legend>
+                  Campaign / Transfer lines
+                  <span>(select multiple)</span>
+                </legend>
+
+                <div class="line-options">
+                  <label class="line-option">
+                    <input type="checkbox" name="lines" value="D1" />
+                    <span>D1</span>
+                  </label>
+
+                  <label class="line-option">
+                    <input type="checkbox" name="lines" value="D2" />
+                    <span>D2</span>
+                  </label>
+
+                  <label class="line-option">
+                    <input type="checkbox" name="lines" value="D3" />
+                    <span>D3</span>
+                  </label>
+
+                  <label class="line-option">
+                    <input type="checkbox" name="lines" value="D4" />
+                    <span>D4</span>
+                  </label>
+
+                  <label class="line-option">
+                    <input type="checkbox" name="lines" value="D5" />
+                    <span>D5</span>
+                  </label>
+
+                  <label class="line-option">
+                    <input type="checkbox" name="lines" value="HI" />
+                    <span>HI</span>
+                  </label>
+
+                  <label class="line-option">
+                    <input type="checkbox" name="lines" value="HI2" />
+                    <span>HI2</span>
+                  </label>
+
+                  <label class="line-option">
+                    <input type="checkbox" name="lines" value="HI3" />
+                    <span>HI3</span>
+                  </label>
+
+                  <label class="line-option">
+                    <input type="checkbox" name="lines" value="Others" />
+                    <span>Others</span>
+                  </label>
+                </div>
+
+                <small class="field-hint">
+                  Example: select D5 + HI2 for a transfer involving both lines.
+                </small>
+              </fieldset>
+
+              <!-- SALES COUNT -->
+
+              <div class="field" id="salesField">
+                <label for="saleCount"> Number of sales </label>
+
                 <input
                   type="number"
                   id="saleCount"
                   min="0"
                   max="999"
                   value="1"
+                  step="1"
                   required
                 />
+
+                <small class="field-hint">
+                  Enter 0 if you worked but made no sale.
+                </small>
               </div>
 
+              <!-- NOTES -->
+
               <div class="field">
-                <label for="notes">Notes (optional)</label>
+                <label for="notes"> Notes (optional) </label>
+
                 <input
                   type="text"
                   id="notes"
@@ -171,73 +367,183 @@
                 />
               </div>
 
+              <!-- BONUS PREVIEW -->
+
+              <div class="bonus-preview" id="bonusPreview">
+                <div>
+                  <span>Daily bonus for this date</span>
+
+                  <strong id="entryBonusPreview"> Rs. 0 </strong>
+                </div>
+
+                <span class="preview-rule">
+                  1 sale = Rs. 0 bonus · 2+ = Rs. 1,000 per sale
+                </span>
+              </div>
+
+              <!-- SAVE -->
+
               <button class="primary full" id="saveBtn" type="submit">
-                Save daily entry
+                Save activity
               </button>
-              <button class="logout full" id="cancelEdit" type="button" hidden>
+
+              <!-- CANCEL EDIT -->
+
+              <button
+                class="secondary full"
+                id="cancelEdit"
+                type="button"
+                hidden
+              >
                 Cancel edit
               </button>
             </form>
+
             <p class="notice">
-              One entry per tracker day. Saving an existing day updates it.
+              One activity record per date. Saving the same date updates its
+              existing record.
             </p>
           </section>
 
-          <!-- Entries Table -->
-          <section class="panel">
+          <!-- ================= DAILY ENTRIES ================= -->
+
+          <section class="panel entries-panel">
             <div class="table-head">
-              <h2>Daily entries</h2>
+              <div>
+                <p class="eyebrow">YOUR ACTIVITY</p>
+                <h2>Daily entries</h2>
+              </div>
+
               <select id="filterLine" aria-label="Filter campaigns">
                 <option value="all">All lines</option>
-                <option>D1</option>
-                <option>D2</option>
-                <option>D3</option>
-                <option>D4</option>
-                <option>D5</option>
-                <option>HI</option>
-                <option>HI2</option>
-                <option>HI3</option>
-                <option>Others</option>
+                <option value="D1">D1</option>
+                <option value="D2">D2</option>
+                <option value="D3">D3</option>
+                <option value="D4">D4</option>
+                <option value="D5">D5</option>
+                <option value="HI">HI</option>
+                <option value="HI2">HI2</option>
+                <option value="HI3">HI3</option>
+                <option value="Others">Others</option>
               </select>
             </div>
+
+            <!-- TABLE LEGEND -->
+
+            <div class="legend">
+              <span class="legend-dot hit-dot"></span>
+              Weekly target hit
+
+              <span class="legend-dot off-dot"></span>
+              Day off
+            </div>
+
+            <!-- ACTIVITY TABLE -->
 
             <div class="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Day / Date</th>
-                    <th>Line</th>
+                    <th>Date / Day</th>
+                    <th>Activity / Lines</th>
                     <th>Sales</th>
+                    <th>Daily bonus</th>
                     <th>Result</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
+
                 <tbody id="entriesBody"></tbody>
               </table>
+
               <p class="empty" id="emptyState">
-                No entries yet. Add your first daily entry.
+                No activity yet. Add your first date.
               </p>
             </div>
 
+            <!-- PROGRESS -->
+
             <div class="progress-panel">
               <div class="progress-row">
-                <span>45-day progress</span>
-                <strong id="progressText">0 of 45 days</strong>
+                <span>Dates recorded</span>
+
+                <strong id="progressText"> 0 dates </strong>
               </div>
+
               <div class="progress">
                 <div class="progress-fill" id="progressFill"></div>
               </div>
+
               <div class="progress-row">
-                <span>Days remaining</span>
-                <strong id="remainingDays">45</strong>
+                <span>Sales days</span>
+
+                <strong id="salesDaysProgress"> 0 </strong>
               </div>
             </div>
           </section>
-        </div>
+        </section>
+
+        <!-- ================= WEEKLY HISTORY ================= -->
+
+        <section class="panel weekly-panel">
+          <div class="table-head">
+            <div>
+              <p class="eyebrow">AEP TARGETS</p>
+
+              <h2>Weekly bonus breakdown</h2>
+
+              <p class="panel-desc compact">
+                Weeks are grouped automatically from Monday to Sunday. The first
+                target is 10 sales per week.
+              </p>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="weekly-table">
+              <thead>
+                <tr>
+                  <th>Week</th>
+                  <th>Date range</th>
+                  <th>Weekly sales</th>
+                  <th>Next target</th>
+                  <th>Weekly bonus</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+
+              <tbody id="weeklyBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ================= BONUS TARGETS ================= -->
+
+        <section class="panel rules-panel">
+          <div class="table-head">
+            <div>
+              <p class="eyebrow">BONUS STRUCTURE</p>
+
+              <h2>Weekly AEP bonus targets</h2>
+            </div>
+          </div>
+
+          <div class="tier-grid" id="tierGrid"></div>
+
+          <p class="notice">
+            Bonus amounts follow the AEP 2026 poster you shared. Confirm final
+            eligibility and payout rules with your employer.
+          </p>
+        </section>
       </main>
     </div>
 
-    <div class="toast" id="toast" role="status"></div>
+    <!-- ================= NOTIFICATIONS ================= -->
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- ================= JAVASCRIPT ================= -->
+
     <script src="script.js"></script>
   </body>
 </html>
